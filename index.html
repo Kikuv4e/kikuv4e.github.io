@@ -1,27 +1,207 @@
-<!DOCTYPE html>
-<html>
-	<head>
-		<title>Hank Quinlan, Horrible Cop</title>
-	</head>
-	<body>
-		<nav>
-    		<ul>
-        		<li><a href="/">Home</a></li>
-	        	<li><a href="/about">About</a></li>
-        		<li><a href="/cv">CV</a></li>
-        		<li><a href="/blog">Blog</a></li>
-    		</ul>
-		</nav>
-		<div class="container">
-    		<div class="blurb">
-        		<h1>Hi there, I'm Hank Quinlan!</h1>
-				<p>I'm best known as the horrible cop from <em>A Touch of Evil</em> Don't trust me. <a href="/about">Read more about my life...</a></p>
-    		</div><!-- /.blurb -->
-		</div><!-- /.container -->
-		<footer>
-    		<ul>
-        		<li><a href="mailto:hankquinlanhub@gmail.com">email</a></li>
-        		<li><a href="https://github.com/hankquinlan">github.com/hankquinlan</a></li>
-			</ul>
-		</footer>
-	</body>
+
+<!doctype html>
+<html lang="en">
+<head>
+    <title>Project Computer Graphics</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+</head>
+<body>
+<script src="libraries/jquery-1.11.3.min.js"></script>
+<script src="libraries/three.min.js"></script>
+<script src="js/Detector.js"></script>
+<script src="js/libs/stats.min.js"></script>
+<script src="js/controls/OrbitControls.js"></script>
+<script src="js/KeyboardState.js"></script>
+<script src="js/THREEx.FullScreen.js"></script>
+<script src="js/THREEx.WindowResize.js"></script>
+<script src="CustomScripts/shaft.js"></script>
+<script src="CustomScripts/swing.js"></script>
+<script src="CustomScripts/weightSwing.js"></script>
+<script src="CustomScripts/lamps.js"></script>
+
+<div id="mainPart" style="position: absolute; left:0px; top:0px"></div>
+<script>
+
+
+    // MAIN
+    var translating = 1;
+
+
+    // standard global variables
+    var container, scene, camera, renderer, controls, stats;
+    var keyboard = new KeyboardState();
+    var clock = new THREE.Clock();
+
+    // custom global variables
+
+    // shaftVariables
+    var makeShaftObject = new THREE.Object3D();
+    var upperBodyShaftObject = new THREE.Object3D();
+    var sideBodyShaftObject = new THREE.Object3D();
+    var sideBodyShaftObjectSecond = new THREE.Object3D();
+
+
+    var topGunObject = new THREE.Object3D();
+    var swingChairObject = new THREE.Object3D();
+    var weightSwingObject = new THREE.Object3D();
+
+    // currentObject manipulation
+    var currentObject = new THREE.Object3D();
+
+
+    //light
+    var spotlight = new THREE.SpotLight( 0xffffff );
+
+    init();
+    animate();
+
+    // FUNCTIONS
+    function init()
+    {
+        // SCENE
+        scene = new THREE.Scene();
+        // CAMERA
+        var SCREEN_WIDTH = window.innerWidth, SCREEN_HEIGHT = window.innerHeight;
+        var VIEW_ANGLE = 45, ASPECT = SCREEN_WIDTH / SCREEN_HEIGHT, NEAR = 0.1, FAR = 20000;
+        camera = new THREE.PerspectiveCamera( VIEW_ANGLE, ASPECT, NEAR, FAR);
+        scene.add(camera);
+        camera.position.set(0,150,400);
+        camera.lookAt(scene.position);
+        // RENDERER
+        if ( Detector.webgl )
+            renderer = new THREE.WebGLRenderer( {antialias:true} );
+        else
+            renderer = new THREE.CanvasRenderer();
+        renderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
+        container = document.getElementById( 'mainPart' );
+        container.appendChild( renderer.domElement );
+        // EVENTS
+        THREEx.WindowResize(renderer, camera);
+        THREEx.FullScreen.bindKey({ charCode : 'm'.charCodeAt(0) });
+        // CONTROLS
+        controls = new THREE.OrbitControls( camera, renderer.domElement );
+        // STATS
+        stats = new Stats();
+        stats.domElement.style.position = 'absolute';
+        stats.domElement.style.bottom = '0px';
+        stats.domElement.style.zIndex = 100;
+        container.appendChild( stats.domElement );
+
+
+        // FLOOR
+        var floorMaterial = new THREE.MeshPhongMaterial( { color: 0xff0000, side: THREE.DoubleSide } );
+        var floorGeometry = new THREE.PlaneGeometry(1000, 1000, 10, 10);
+        var floor = new THREE.Mesh(floorGeometry, floorMaterial);
+        floor.position.y = -0.5;
+        floor.rotation.x = Math.PI / 2;
+        floor.receiveShadow = true;
+        scene.add(floor);
+
+
+        // SKYBOX
+        var skyBoxGeometry = new THREE.CubeGeometry( 10000, 10000, 10000 );
+        var skyBoxMaterial = new THREE.MeshPhongMaterial( { color: 0x9999ff, side: THREE.BackSide } );
+        var skyBox = new THREE.Mesh( skyBoxGeometry, skyBoxMaterial );
+        scene.add(skyBox);
+
+
+        // add lights
+
+        var ambientLight = new THREE.AmbientLight( 0x242424 );
+        renderer.shadowMapEnabled = true;
+
+        // "shadow cameras" show the light source and direction
+
+        // spotlight #1 -- yellow, dark shadow
+        spotlight = new THREE.SpotLight(0xffffff);
+        spotlight.position.set(-40,242, 110);
+        spotlight.shadowCameraVisible = true;
+        spotlight.shadowDarkness = 0.95;
+        spotlight.intensity = 1;
+        // must enable shadow casting ability for the light
+        spotlight.castShadow = true;
+        scene.add( spotlight );
+        scene.add(ambientLight);
+        // create scene
+        createScene(scene);
+
+    }
+    function createScene(scene){
+        createShaft(makeShaftObject, upperBodyShaftObject, sideBodyShaftObject, sideBodyShaftObjectSecond);
+        creatingSwing(scene,swingChairObject );
+        spotlight.target = makeShaftObject;
+        scene.add(makeShaftObject);
+        scene.add(swingChairObject);
+        createLamp(scene, currentObject);
+        scene.add(currentObject);
+        createMultipleWeightSwings(scene, weightSwingObject, Math.PI/9);
+        scene.add(weightSwingObject);
+
+    }
+
+    function animate()
+    {
+        requestAnimationFrame( animate );
+        render();
+        update();
+    }
+    $(document).bind('keypress', function (e) {
+        var code = e.keyCode || e.which;
+        if(code == 120) {
+            currentObject.translateX(translating)
+            console.log (currentObject.position.x)
+        }else if(code == 88) {
+            currentObject.translateX(-translating)
+            console.log (currentObject.position.x)
+        }else if(code == 121) {
+            currentObject.translateY(translating)
+            console.log (currentObject.position.y)
+        }else if(code == 89) {
+            currentObject.translateY(-translating)
+            console.log (currentObject.position.y)
+        }else if(code == 122) {
+            currentObject.translateZ(translating)
+            console.log (currentObject.position.z)
+        }else if(code == 90) {
+            currentObject.translateZ(-translating)
+            console.log (currentObject.position.z)
+        }else if (code == 32) {
+            console.log ("Current position is " +  currentObject.position.x + " " + currentObject.position.y + " " +
+                    currentObject.position.z);
+        }else if (code == 48) {
+            translating++;
+        }else if (code == 49){
+            translating--;
+        }else if (code == 102){
+            currentObject.rotateOnAxis(new THREE.Vector3(1, 0, 0), Math.PI/32);
+        }else if (code == 103){
+            currentObject.rotateOnAxis(new THREE.Vector3(0, 1, 0), Math.PI/32);
+        }
+        else if (code == 104){
+            currentObject.rotateOnAxis(new THREE.Vector3(0, 0, 1), Math.PI/32);
+        }else if (code == 70){
+            currentObject.rotateOnAxis(new THREE.Vector3(1, 0, 0), -Math.PI/32);
+        }else if (code == 71){
+            currentObject.rotateOnAxis(new THREE.Vector3(0, 1, 0), -Math.PI/32);
+        }
+        else if (code == 72){
+            currentObject.rotateOnAxis(new THREE.Vector3(0, 0, 1), -Math.PI/32);
+        }
+    });
+    function update()
+    {
+        controls.update();
+        stats.update();
+    }
+
+    function render()
+    {
+        renderer.render( scene, camera );
+    }
+
+</script>
+
+</body>
+</html>
+ 
