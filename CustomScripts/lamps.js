@@ -3,7 +3,7 @@
  */
 
 
-function createLamp(scene, final){
+function createLamp(scene, final, target){
     var object = new CreateObjects(scene);
     object.createCylinder(4, 4, 231, 20, 20);
     object.currentObject.position.set(-38, 231/2, 108);
@@ -21,4 +21,13 @@ function createLamp(scene, final){
     object.currentObject.material.color.setHex(0x0000ff);
     final.add(object.currentObject);
     final.position.set(0, 0, -12);
+    spotlight = new THREE.SpotLight(0xffffff);
+    spotlight.position.set(-40,242, 110);
+    spotlight.shadowDarkness = 0.95;
+    spotlight.intensity = 1;
+    // must enable shadow casting ability for the light
+    spotlight.castShadow = true;
+    spotlight.target = target;
+    final.add(spotlight);
+    final.position.set(37, 0, 0);
 }

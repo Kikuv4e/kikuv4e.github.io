@@ -111,17 +111,6 @@
         var ambientLight = new THREE.AmbientLight( 0x242424 );
         renderer.shadowMapEnabled = true;
 
-        // "shadow cameras" show the light source and direction
-
-        // spotlight #1 -- yellow, dark shadow
-        spotlight = new THREE.SpotLight(0xffffff);
-        spotlight.position.set(-40,242, 110);
-        spotlight.shadowCameraVisible = true;
-        spotlight.shadowDarkness = 0.95;
-        spotlight.intensity = 1;
-        // must enable shadow casting ability for the light
-        spotlight.castShadow = true;
-        scene.add( spotlight );
         scene.add(ambientLight);
         // create scene
         createScene(scene);
@@ -130,10 +119,9 @@
     function createScene(scene){
         createShaft(makeShaftObject, upperBodyShaftObject, sideBodyShaftObject, sideBodyShaftObjectSecond);
         creatingSwing(scene,swingChairObject );
-        spotlight.target = makeShaftObject;
         scene.add(makeShaftObject);
         scene.add(swingChairObject);
-        createLamp(scene, currentObject);
+        createLamp(scene, currentObject, makeShaftObject);
         scene.add(currentObject);
         createMultipleWeightSwings(scene, weightSwingObject, Math.PI/9);
         scene.add(weightSwingObject);
@@ -204,4 +192,3 @@
 
 </body>
 </html>
- 
